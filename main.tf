@@ -189,12 +189,13 @@ resource "aws_s3_bucket_ownership_controls" "my_bucket_ownership" {
 
 
 resource "aws_s3_bucket_acl" "my_bucket_acl" {
-  depends_on = [
-    aws_s3_bucket_public_access_block.my_bucket_block,
-    aws_s3_bucket_ownership_controls.my_bucket_ownership
-  ]
+  # New buckets default to BucketOwnerEnforced, which disables ACLs entirely.
+  # The ownership controls above flip that to BucketOwnerPreferred, so ACLs must
+  # be re-enabled before this resource can set one — otherwise AWS returns
+  # AccessControlListNotSupported. Terraform can't infer this from a reference.
+  depends_on = [aws_s3_bucket_ownership_controls.my_bucket_ownership]
 
-  bucket = aws_s3_bucket.my_bucket.id 
+  bucket = aws_s3_bucket.my_bucket.id
   acl    = "private"
 }
 
